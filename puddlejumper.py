@@ -117,7 +117,7 @@ class GameUI(discord.ui.View):
     @discord.ui.button(style=discord.ButtonStyle.blurple, label="LETS GO!")
     async def startGame(self, interact : discord.Interaction, button : discord.ui.Button):
         user = interact.user
-        if user != self.owner:
+        if user == self.owner:
             notifString = "Game is starting! \n"
             for player in self.players:
                 notifString += f"{player.mention} "
