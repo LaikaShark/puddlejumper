@@ -72,23 +72,24 @@ class GameUI(discord.ui.View):
         self.yaml = []
         self.message = None
         self.parentInteraction = parentInteraction
+        self.owner = parentInteraction.user 
         
     @discord.ui.button(style=discord.ButtonStyle.success, label="Sign me up!")
     async def joinGame(self, interact : discord.Interaction, button : discord.ui.Button):
-        name = interact.user.display_name
-        if name not in self.players:
-            self.players.append(name)
+        user = interact.user
+        if user not in self.players:
+            self.players.append(user)
             await interact.response.send_message("Prepare to be randomized!", ephemeral=True)
         else:
             await interact.response.send_message("Already randomized! If I randomize you again you'll be scrongled!", ephemeral=True)
         await self.rebuildMessage()
 
     @discord.ui.button(style=discord.ButtonStyle.success, label="My yaml is in!")
-    async def joinMaybe(self, interact : discord.Interaction, button : discord.ui.Button):
-        name = interact.user.display_name
-        if name in self.players:
-            if name not in self.yaml:
-                self.yaml.append(name)
+    async def yamlCheckIn(self, interact : discord.Interaction, button : discord.ui.Button):
+        user = interact.user
+        if user in self.players:
+            if user not in self.yaml:
+                self.yaml.append(user)
                 await interact.response.send_message("NYAml recorded! :3", ephemeral=True)
             else:
                 await interact.response.send_message("You're already on the list!", ephemeral=True)
@@ -98,20 +99,33 @@ class GameUI(discord.ui.View):
         
     @discord.ui.button(style=discord.ButtonStyle.red, label="I'm out!")
     async def leaveGame(self, interact : discord.Interaction, button : discord.ui.Button):
-        name = interact.user.display_name
+        user = interact.user
         removed = False
-        if name in self.players:
+        if user in self.players:
             removed = True
-            self.players.remove(name)
-        if name in self.yaml:
+            self.players.remove(user)
+        if user in self.yaml:
             removed = True
-            self.yaml.remove(name)
+            self.yaml.remove(user)
         if removed:
             await interact.response.send_message("You're out!", ephemeral=True)
         else:
             await interact.response.send_message("You weren't in!", ephemeral=True)
         await self.rebuildMessage()
-            
+
+
+    @discord.ui.button(style=discord.ButtonStyle.blurple, label="LETS GO!")
+    async def startGame(self, interact : discord.Interaction, button : discord.ui.Button):
+        user = interact.user
+        if user != self.owner:
+            notifString = "Game is starting! \n"
+            for player in self.players:
+                notifString += f"{player.mention} "
+            await interact.response.send_message(notifString)
+        else:
+            await interact.response.send_message("Only the owner of this game can start it!", ephemeral=True)
+
+
     async def rebuildMessage(self):
         if self.message is None:
             temp = await self.parentInteraction.original_response()
@@ -122,10 +136,11 @@ class GameUI(discord.ui.View):
         playerString = ""
 
         for player in self.players:
-            playerString += f"{player}\n"
+            playerNick = player.display_name
+            playerString += f"{playerNick}\n"
             if player not in self.yaml:
-                yamlstring += f"{player}\n"
-        
+                yamlstring += f"{playerNick}\n"
+
         embedDic = {
             "title" : originalTitle,
             "color" : 5763719,
